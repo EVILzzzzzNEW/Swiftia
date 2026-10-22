@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Swiftia">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="assets/icon.png">
+<link rel="apple-touch-icon" href="assets/icon.png">
+<title>Swiftia</title>
+<style>
+/* ---------- Reset & tokens ---------- */
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html, body { height:100%; overscroll-behavior:none; }
+:root{
+  --bg:#000;
+  --card:rgba(255,255,255,.06);
+  --card-border:rgba(255,255,255,.09);
+  --text:#f5f5f7;
+  --sub:rgba(245,245,247,.62);
+  --accent:#0a84ff;
+  --accent2:#5e5ce6;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bot:env(safe-area-inset-bottom,0px);
+}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:#000; color:var(--text);
+  -webkit-font-smoothing:antialiased;
+  user-select:none; -webkit-user-select:none;
+}
+button{ font-family:inherit; border:0; background:none; color:inherit; cursor:pointer; }
+input{ font-family:inherit; }
+
+/* ---------- Background crossfade ---------- */
+.bg{ position:fixed; inset:0; z-index:-2; opacity:0; transition:opacity .7s ease; }
+.bg.on{ opacity:1; }
+
+/* ---------- Views ---------- */
+.view{ display:none; min-height:100%; padding-top:var(--safe-top); padding-bottom:calc(var(--safe-bot) + 18px); }
+.view.show{ display:block; animation:viewIn .45s cubic-bezier(.32,1.18,.44,1); }
+@keyframes viewIn{ from{ opacity:0; transform:translateY(14px);} to{ opacity:1; transform:none;} }
+
+/* ---------- Landing ---------- */
+.hero{ display:flex; flex-direction:column; align-items:center; text-align:center; padding:64px 28px 10px; }
+.logo-badge{
+  width:104px; height:104px; border-radius:26px; background:#050505;
+  border:1px solid rgba(255,255,255,.14);
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 14px 40px rgba(0,0,0,.85), inset 0 1px 0 rgba(255,255,255,.07);
+  animation:logoIn .8s cubic-bezier(.3,1.4,.4,1);
+}
+@keyframes logoIn{ from{ transform:scale(.6) rotate(-8deg); opacity:0;} to{ transform:none; opacity:1;} }
+.hero h1{ margin-top:20px; font-size:38px; font-weight:800; letter-spacing:-.5px; }
+.hero .tag{ margin-top:8px; font-size:16px; color:var(--sub); }
+.verchip{
+  margin-top:16px; padding:7px 16px; border-radius:999px; font-size:13px; font-weight:600;
+  background:linear-gradient(120deg,rgba(10,132,255,.22),rgba(94,92,230,.22));
+  border:1px solid rgba(10,132,255,.35); color:#9ecbff;
+}
+.install-btn{
+  margin-top:30px; padding:0; width:100%; max-width:340px; height:58px; border-radius:29px;
+  font-size:19px; font-weight:700; color:#fff;
+  background:linear-gradient(120deg,#0a84ff,#5e5ce6);
+  box-shadow:0 10px 30px rgba(10,132,255,.35);
+  transition:transform .18s cubic-bezier(.32,1.4,.44,1), filter .2s;
+}
+.install-btn:active{ transform:scale(.96); filter:brightness(1.15); }
+
+.about{ max-width:520px; margin:36px auto 0; padding:0 22px; display:flex; flex-direction:column; gap:14px; }
+.card{
+  background:var(--card); border:1px solid var(--card-border); border-radius:20px;
+  padding:18px; backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
+}
+.card h2{ font-size:16px; font-weight:700; margin-bottom:8px; display:flex; align-items:center; gap:8px; }
+.card p{ font-size:13.5px; line-height:1.55; color:var(--sub); }
+.card ul{ margin:6px 0 0 16px; font-size:13.5px; line-height:1.7; color:var(--sub); }
+.dot{ width:9px; height:9px; border-radius:3px; display:inline-block; }
+.footer-note{ text-align:center; font-size:11px; color:rgba(245,245,247,.35); margin-top:34px; padding:0 22px; }
+
+/* ---------- App view ---------- */
+.wrap{ max-width:520px; margin:0 auto; padding:0 22px; }
+.apphead{ display:flex; align-items:center; gap:12px; padding:22px 2px 16px; }
+.apphead .mini-logo{ width:44px; height:44px; border-radius:12px; background:#050505; border:1px solid rgba(255,255,255,.14); display:flex; align-items:center; justify-content:center; box-shadow:0 6px 18px rgba(0,0,0,.7); }
+.apphead h1{ font-size:26px; font-weight:800; letter-spacing:-.4px; }
+.apphead p{ font-size:12px; color:var(--sub); margin-top:1px; }
+.apphead .right{ margin-left:auto; text-align:right; }
+.jb-badge{ font-size:12px; font-weight:700; }
+
+.console{
+  position:relative; border-radius:20px; border:1px solid var(--card-border);
+  background:rgba(255,255,255,.05); backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
+  overflow:hidden;
+}
+.console-head{ display:flex; align-items:center; justify-content:space-between; padding:12px 16px 8px; }
+.console-head span{ font-size:12px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--sub); }
+.console-head button{ font-size:12px; color:var(--accent); font-weight:600; }
+.logs{
+  height:190px; overflow-y:auto; padding:4px 16px 14px;
+  -webkit-mask-image:linear-gradient(180deg,transparent 0,#000 34px); mask-image:linear-gradient(180deg,transparent 0,#000 34px);
+}
+.log-line{ display:flex; gap:8px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11.5px; line-height:1.9; opacity:0; transform:translateY(8px); animation:logIn .45s ease forwards; }
+@keyframes logIn{ to{ opacity:1; transform:none; } }
+.log-line .t{ color:rgba(245,245,247,.35); min-width:44px; }
+.log-line .m{ color:rgba(245,245,247,.85); word-break:break-word; }
+.log-line.ok .m{ color:#5ee3a0; }
+.logs-empty{ font-size:12px; color:rgba(245,245,247,.3); font-family:ui-monospace,Menlo,monospace; padding:10px 0; }
+
+.bigbtn{
+  width:100%; height:60px; border-radius:30px; margin-top:20px;
+  font-size:19px; font-weight:700; color:#fff;
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  background:linear-gradient(120deg,var(--accent),var(--accent2));
+  box-shadow:0 12px 32px rgba(0,0,0,.45);
+  transition:transform .18s cubic-bezier(.32,1.4,.44,1), filter .2s, opacity .3s;
+}
+.bigbtn:active{ transform:scale(.965); filter:brightness(1.12); }
+.bigbtn:disabled{ opacity:.72; }
+.bigbtn.jb-done{ background:linear-gradient(120deg,#30d158,#0a84ff); box-shadow:0 12px 32px rgba(48,209,88,.25); }
+.sileo-btn{
+  width:100%; height:54px; border-radius:27px; margin-top:14px;
+  font-size:17px; font-weight:700; color:#fff; display:flex; align-items:center; justify-content:center; gap:10px;
+  background:linear-gradient(120deg,#ff2d55,#5e5ce6);
+  box-shadow:0 10px 26px rgba(255,45,85,.22);
+  transition:transform .18s cubic-bezier(.32,1.4,.44,1);
+}
+.sileo-btn:active{ transform:scale(.97); }
+.remove-btn{
+  width:100%; height:46px; border-radius:23px; margin-top:12px;
+  font-size:15px; font-weight:700; color:#ff453a;
+  background:rgba(255,69,58,.1); border:1px solid rgba(255,69,58,.22);
+  transition:transform .18s cubic-bezier(.32,1.4,.44,1);
+}
+.remove-btn:active{ transform:scale(.97); }
+
+.jb-only{ display:none; }
+body[data-jb="true"] .jb-only{ display:flex; animation:riseIn .5s cubic-bezier(.3,1.3,.42,1) both; }
+@keyframes riseIn{ from{ opacity:0; transform:translateY(16px);} to{ opacity:1; transform:none;} }
+
+.thsec{ margin-top:26px; }
+.thsec h3, .qhead{ font-size:15px; font-weight:700; margin-bottom:10px; }
+.thgrid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.thcard{
+  position:relative; height:74px; border-radius:18px; overflow:hidden;
+  border:1px solid rgba(255,255,255,.14); display:flex; align-items:flex-end; padding:10px 12px;
+  transition:transform .2s cubic-bezier(.32,1.4,.44,1), box-shadow .2s;
+}
+.thcard:active{ transform:scale(.95); }
+.thcard span{ font-size:13px; font-weight:700; color:#fff; text-shadow:0 1px 6px rgba(0,0,0,.55); position:relative; z-index:1; }
+.thcard.active{ box-shadow:0 0 0 2.5px var(--accent), 0 8px 22px rgba(0,0,0,.5); }
+.thcard.check::after{ content:""; position:absolute; inset:0; background:radial-gradient(1px 1px at 20% 30%,rgba(255,255,255,.8),transparent), radial-gradient(1.5px 1.5px at 70% 55%,rgba(255,255,255,.65),transparent); }
+
+.appfoot{ text-align:center; font-size:11px; color:rgba(245,245,247,.3); margin-top:30px; }
+
+.motion-chip{
+  margin-top:14px; display:none; align-items:center; justify-content:center; gap:8px;
+  width:100%; height:44px; border-radius:22px; font-size:13.5px; font-weight:600;
+  background:rgba(10,132,255,.14); border:1px solid rgba(10,132,255,.4); color:#9ecbff;
+}
+.motion-chip.show{ display:flex; animation:pulse 1.8s ease infinite; }
+@keyframes pulse{ 0%,100%{ box-shadow:0 0 0 0 rgba(10,132,255,.35);} 50%{ box-shadow:0 0 0 8px rgba(10,132,255,0);} }
+
+/* ---------- Sheet ---------- */
+.sheet-wrap{ position:fixed; inset:0; z-index:80; display:none; }
+.sheet-wrap.open{ display:block; }
+.dim{ position:absolute; inset:0; background:rgba(0,0,0,.55); opacity:0; transition:opacity .4s; }
+.sheet-wrap.open .dim{ opacity:1; }
+.sheet{
+  position:absolute; left:0; right:0; bottom:0;
+  max-height:94%; border-radius:28px 28px 0 0;
+  background:#101012; border:1px solid rgba(255,255,255,.1); border-bottom:0;
+  transform:translateY(103%); transition:transform .5s cubic-bezier(.3,1.15,.4,1);
+  display:flex; flex-direction:column;
+  padding-top:var(--safe-top);
+}
+.sheet-wrap.open .sheet{ transform:none; }
+.grabber{ width:38px; height:5px; border-radius:3px; background:rgba(255,255,255,.25); margin:10px auto 2px; flex:none; }
+.sheet-title{ text-align:center; font-size:17px; font-weight:800; padding:6px 0 2px; }
+.sheet-body{ overflow-y:auto; padding:14px 20px calc(var(--safe-bot) + 20px); }
+
+/* Install sheet */
+.profcard{ background:var(--card); border:1px solid var(--card-border); border-radius:18px; padding:16px; margin-top:10px; }
+.profrow{ display:flex; align-items:center; gap:12px; padding:9px 0; border-bottom:1px solid rgba(255,255,255,.06); }
+.profrow:last-child{ border-bottom:0; }
+.profrow .k{ font-size:13.5px; font-weight:600; }
+.profrow .v{ margin-left:auto; font-size:13.5px; color:var(--sub); text-align:right; }
+.verified{ color:#5ee3a0; font-weight:700; font-size:12.5px; display:none; margin-top:12px; text-align:center; }
+.verified.show{ display:block; animation:viewIn .4s ease; }
+.progress{ height:5px; border-radius:3px; background:rgba(255,255,255,.1); margin-top:14px; overflow:hidden; }
+.progress i{ display:block; height:100%; width:0; background:linear-gradient(90deg,#0a84ff,#5e5ce6); border-radius:3px; transition:width .3s ease; }
+.sheet .bigbtn{ margin-top:18px; height:52px; font-size:17px; }
+.steps{ margin-top:16px; display:flex; flex-direction:column; gap:10px; }
+.step{ display:flex; gap:12px; align-items:flex-start; font-size:14px; color:var(--sub); line-height:1.5; }
+.step b{ color:var(--text); font-weight:700; }
+.step .n{ flex:none; width:24px; height:24px; border-radius:12px; background:rgba(10,132,255,.2); color:#9ecbff; font-size:12px; font-weight:800; display:flex; align-items:center; justify-content:center; margin-top:2px; }
+
+/* ---------- Sileo ---------- */
+.seg{ display:flex; gap:4px; background:rgba(255,255,255,.07); border-radius:14px; padding:4px; margin-bottom:14px; }
+.seg button{ flex:1; height:36px; border-radius:10px; font-size:14px; font-weight:700; color:var(--sub); transition:all .25s cubic-bezier(.32,1.3,.44,1); }
+.seg button.on{ background:rgba(255,255,255,.14); color:#fff; box-shadow:0 2px 10px rgba(0,0,0,.35); }
+.search{
+  width:100%; height:42px; border-radius:14px; margin-bottom:12px;
+  background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.09);
+  color:var(--text); padding:0 14px 0 38px; font-size:15px; outline:none;
+}
+.searchwrap{ position:relative; }
+.searchwrap svg{ position:absolute; left:12px; top:12px; opacity:.5; }
+.srccard{
+  display:flex; align-items:center; gap:14px; padding:14px; border-radius:18px;
+  background:var(--card); border:1px solid var(--card-border); margin-bottom:10px;
+  transition:transform .18s cubic-bezier(.32,1.4,.44,1);
+}
+.srccard:active{ transform:scale(.98); }
+.srcicon{ width:46px; height:46px; border-radius:13px; flex:none; display:flex; align-items:center; justify-content:center; box-shadow:inset 0 1px 0 rgba(255,255,255,.25); }
+.srccard .n{ font-size:15px; font-weight:700; }
+.srccard .u{ font-size:12px; color:var(--sub); margin-top:2px; }
+.addsrc{
+  width:100%; height:50px; border-radius:18px; margin:4px 0 10px;
+  font-size:15px; font-weight:700; color:var(--accent);
+  background:rgba(10,132,255,.1); border:1.5px dashed rgba(10,132,255,.45);
+  transition:transform .18s cubic-bezier(.32,1.4,.44,1);
+}
+.addsrc:active{ transform:scale(.97); }
+.backrow{ display:flex; align-items:center; padding:2px 0 10px; }
+.backrow button{ font-size:15px; color:var(--accent); font-weight:700; display:flex; align-items:center; gap:4px; }
+.pkg{
+  display:flex; align-items:center; gap:13px; padding:12px 14px;
+  background:var(--card); border:1px solid var(--card-border); border-radius:18px; margin-bottom:9px;
+}
+.pkg .ic{ width:42px; height:42px; border-radius:12px; flex:none; display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:800; color:#fff; box-shadow:inset 0 1px 0 rgba(255,255,255,.25); }
+.pkg .info{ flex:1; min-width:0; }
+.pkg .n{ font-size:15px; font-weight:700; }
+.pkg .s{ font-size:12px; color:var(--sub); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pkgbtn{
+  flex:none; padding:0 16px; height:34px; border-radius:17px;
+  font-size:13.5px; font-weight:800; letter-spacing:.4px; color:#fff;
+  background:linear-gradient(120deg,#0a84ff,#5e5ce6); transition:transform .15s, filter .2s;
+}
+.pkgbtn:active{ transform:scale(.93); filter:brightness(1.15); }
+.pkgbtn.queued{ background:rgba(245,245,247,.14); color:var(--sub); }
+.pkgbtn.applied{ background:transparent; color:#5ee3a0; }
+.pkgbtn.small{ padding:0 12px; font-size:12.5px; }
+.pkg .desc{ font-size:12.5px; color:var(--sub); margin-top:4px; line-height:1.45; }
+.qbar{
+  position:sticky; bottom:calc(var(--safe-bot) - 16px); margin:10px -20px calc(-24px - var(--safe-bot));
+  padding:12px 20px calc(var(--safe-bot) + 12px);
+  background:rgba(16,16,18,.85); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  border-top:1px solid rgba(255,255,255,.08);
+}
+.qbar .bigbtn{ margin-top:0; height:50px; font-size:16px; }
+.qbar .note{ text-align:center; font-size:11.5px; color:var(--sub); margin-top:8px; }
+.empty{ text-align:center; color:rgba(245,245,247,.35); font-size:14px; padding:40px 0; }
+.qlist .pkg{ margin-bottom:8px; }
+.xbtn{ width:26px; height:26px; border-radius:13px; background:rgba(255,255,255,.12); color:var(--sub); font-size:13px; display:flex; align-items:center; justify-content:center; flex:none; }
+
+/* ---------- Editable blocks / gravity ---------- */
+[data-ed]{ transition:transform .65s cubic-bezier(.28,1.35,.4,1); will-change:transform; }
+.ed-on [data-ed]{ outline:1.5px dashed rgba(255,255,255,.4); outline-offset:6px; border-radius:22px; }
+.g-on [data-ed]{ transition:transform .5s cubic-bezier(.3,1.55,.4,1); }
+#edcorner{ position:fixed; top:0; right:0; width:92px; height:92px; z-index:60; display:none; }
+body[data-edavail="true"] #edcorner{ display:block; }
+
+/* ---------- Toast ---------- */
+#toast{ position:fixed; top:calc(var(--safe-top) + 14px); left:50%; transform:translate(-50%,-70px); z-index:120; transition:transform .45s cubic-bezier(.3,1.3,.42,1), opacity .35s; opacity:0; pointer-events:none; }
+#toast.show{ transform:translate(-50%,0); opacity:1; }
+#toast .pill{
+  display:flex; align-items:center; gap:8px; padding:11px 18px; border-radius:22px;
+  background:rgba(28,28,32,.88); border:1px solid rgba(255,255,255,.14);
+  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  font-size:14px; font-weight:600; color:var(--text); box-shadow:0 14px 44px rgba(0,0,0,.6);
+  white-space:nowrap;
+}
+
+/* ---------- Respring ---------- */
+#respring{
+  position:fixed; inset:0; z-index:200; background:#000;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  opacity:0; pointer-events:none; transition:opacity .3s;
+}
+#respring.on{ opacity:1; pointer-events:all; }
+#respring .apple{ width:66px; height:66px; fill:#fff; animation:appleGlow 2.2s ease infinite; }
+@keyframes appleGlow{ 0%,100%{ opacity:.85; } 50%{ opacity:1; } }
+#respring .rbar{ width:190px; height:4px; border-radius:2px; background:rgba(255,255,255,.16); margin-top:34px; overflow:hidden; }
+#respring .rbar i{ display:block; height:100%; width:0; background:#fff; border-radius:2px; }
+#statusmask{ position:fixed; top:0; left:0; right:0; height:var(--safe-top); background:#000; z-index:201; opacity:0; transition:opacity .3s; pointer-events:none; }
+#statusmask.on{ opacity:1; }
+#respring .msg{ margin-top:26px; font-size:13px; color:rgba(255,255,255,.5); }
+</style>
+</head>
+<body data-jb="false" data-edavail="false">
+
+<div class="bg on" id="bgA"></div>
+<div class="bg" id="bgB"></div>
+
+<!-- ============ LANDING ============ -->
+<div class="view show" id="v-landing">
+  <div class="hero">
+    <div class="logo-badge">
+      <svg width="72" height="72" viewBox="0 0 72 72"><polygon points="36,12 58,60 14,60" fill="#fff"/></svg>
+    </div>
+    <h1>Swiftia</h1>
+    <p class="tag">Jailbreak for iOS 26.6 – 27.0.1</p>
+    <div class="verchip">SwiftSword · semi-untethered · A12 and later</div>
+    <button class="install-btn" onclick="startInstall()">Install Swiftia</button>
+  </div>
+
+  <div class="about">
+    <div class="card">
+      <h2><span class="dot" style="background:#0a84ff"></span>About the exploit</h2>
+      <p><b>SwiftSword</b> is a kernel exploit supporting iOS 26.6 through 27.0.1. It leverages a race condition in the physical page mapping subsystem to gain kernel read &amp; write, then patches the platform trust cache and remounts the rootfs.</p>
+      <ul>
+        <li>Kernel read/write via physmap race</li>
+        <li>Trust cache injection, no kernel patches</li>
+        <li>RootFS remount, stable across reboots</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h2><span class="dot" style="background:#30d158"></span>About the jailbreak</h2>
+      <p>Swiftia is a semi-untethered jailbreak. It installs a lightweight bootstrap with <b>Sileo</b> for packages, tweaks and themes. After the initial run your device stays jailbroken until you reboot and re-jailbreak.</p>
+      <ul>
+        <li>Sileo built in with themes &amp; tweaks</li>
+        <li>Remove Jailbreak from the main page any time</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h2><span class="dot" style="background:#ffd60a"></span>Not sure about your iOS?</h2>
+      <p>Open <b>Settings → General → About → Software Version</b> and check that it is between 26.6 and 27.0.1 before installing.</p>
+    </div>
+  </div>
+  <p class="footer-note">Swiftia · SwiftSword exploit · iOS 26.6 – 27.0.1</p>
+</div>
+
+<!-- ============ APP ============ -->
+<div class="view" id="v-app">
+  <div class="wrap">
+    <div class="apphead" data-ed="e1">
+      <div class="mini-logo"><svg width="30" height="30" viewBox="0 0 72 72"><polygon points="36,12 58,60 14,60" fill="#fff"/></svg></div>
+      <div>
+        <h1>Swiftia</h1>
+        <p>Jailbreak for iOS 26.6 – 27.0.1</p>
+      </div>
+      <div class="right">
+        <div class="jb-badge" id="jbbadge" style="color:#5ee3a0"></div>
+        <div style="font-size:11px;color:rgba(245,245,247,.4);margin-top:2px" id="jbdesc"></div>
+      </div>
+    </div>
+
+    <button class="motion-chip" id="motionChip" onclick="askMotion()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="#9ecbff"><path d="M12 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm9 7h-6v11a1 1 0 0 1-2 0v-5h-2v5a1 1 0 0 1-2 0V9H3a1 1 0 1 1 0-2h18a1 1 0 1 1 0 2z"/></svg>
+      Gravitation needs motion access — Tap to allow
+    </button>
+
+    <div class="console" data-ed="e2" style="margin-top:14px">
+      <div class="console-head"><span>Console</span><button onclick="clearLogs()">Clear</button></div>
+      <div class="logs" id="logs"></div>
+    </div>
+
+    <button class="bigbtn" id="bigbtn" data-ed="e3" onclick="onBigBtn()"></button>
+
+    <button class="sileo-btn jb-only" data-ed="e4" onclick="openSileo()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M12 1a5 5 0 0 0-5 5v2H5a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V10a2 2 0 0 0-2-2h-2V6a5 5 0 0 0-5-5zm-3 5a3 3 0 1 1 6 0v2H9V6zm-2 7a1.2 1.2 0 1 1 .01-2.4A1.2 1.2 0 0 1 7 13zm10 0a1.2 1.2 0 1 1 .01-2.4A1.2 1.2 0 0 1 17 13z"/></svg>
+      Sileo
+    </button>
+
+    <div class="thsec jb-only" data-ed="e5" style="flex-direction:column;align-items:stretch">
+      <h3>Themes</h3>
+      <div class="thgrid" id="thgrid"></div>
+    </div>
+
+    <button class="remove-btn jb-only" data-ed="e6" onclick="removeJB()">Remove Jailbreak</button>
+
+    <p class="appfoot" data-ed="e7">Swiftia v1.3 · SwiftSword · Sileo 2.4.1</p>
+  </div>
+</div>
+
+<!-- ============ SHEETS ============ -->
+<div class="sheet-wrap" id="installSheet">
+  <div class="dim" onclick="closeInstallCancel()"></div>
+  <div class="sheet">
+    <div class="grabber"></div>
+    <div class="sheet-title">Install Swiftia</div>
+    <div class="sheet-body" id="installBody"></div>
+  </div>
+</div>
+
+<div class="sheet-wrap" id="sileoSheet">
+  <div class="dim" onclick="closeSileo()"></div>
+  <div class="sheet">
+    <div class="grabber"></div>
+    <div class="sheet-title">Sileo</div>
+    <div class="sheet-body" id="sileoBody" style="padding-top:6px"></div>
+  </div>
+</div>
+
+<!-- toasts / corner / respring -->
+<div id="toast"><div class="pill"><span id="toasttxt"></span></div></div>
+<div id="edcorner"></div>
+<div id="statusmask"></div>
+<div id="respring">
+  <svg class="apple" viewBox="0 0 24 24"><path d="M17.05 12.54c-.03-2.3 1.88-3.4 1.97-3.46-1.07-1.57-2.75-1.78-3.34-1.8-1.42-.15-2.77.83-3.49.83-.72 0-1.83-.81-3.01-.79-1.55.02-2.98.9-3.78 2.28-1.61 2.79-.41 6.92 1.16 9.18.76 1.11 1.68 2.35 2.89 2.3 1.16-.05 1.6-.75 3.01-.75 1.4 0 1.8.75 3.03.73 1.25-.02 2.04-1.13 2.8-2.25.88-1.28 1.24-2.52 1.26-2.58-.03-.01-2.42-.93-2.44-3.69zM14.8 5.7c.63-.77 1.06-1.84.94-2.91-.91.04-2.02.61-2.68 1.37-.59.68-1.1 1.77-.96 2.81 1.02.08 2.06-.51 2.7-1.27z"/></svg>
+  <div class="rbar"><i id="rbarfill"></i></div>
+  <div class="msg" id="rmsg"></div>
+</div>
+
+<script>
+/* ================= Store ================= */
+var KEY='swiftia_state_v1';
+function fresh(){ return {installed:false,jailbroken:false,themes:['monochrome'],active:'monochrome',tweaks:[],queue:[],queueReady:false,motion:false,edpos:{},sources:[]}; }
+var S=(function(){ try{ var r=localStorage.getItem(KEY); if(r){ var o=JSON.parse(r); var f=fresh(); for(var k in f){ if(o[k]===undefined) o[k]=f[k]; } return o; } }catch(e){} return fresh(); })();
+function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
+
+/* ================= Data ================= */
+var THEMES={
+  monochrome:{name:'Monochrome', c1:'#0b0b0f', c2:'#33333a', accent:'#f5f5f7', accent2:'#7c7c88', good:1},
+  aurora:{name:'Aurora', c1:'#0f2027', c2:'#2c5364', accent:'#26d0ce', accent2:'#1a6f8a'},
+  orchid:{name:'Orchid Haze', c1:'#654ea3', c2:'#eaafc8', accent:'#c9a0ea', accent2:'#b07bc7'},
+  ember:{name:'Ember', c1:'#5f1a1a', c2:'#ef473a', accent:'#ff7a6e', accent2:'#c22a1f'},
+  meadow:{name:'Meadow', c1:'#12422e', c2:'#71b280', accent:'#8fd6a0', accent2:'#2e7d4f'},
+  nebula:{name:'Nebula', c1:'#41295a', c2:'#2f0743', accent:'#b57aff', accent2:'#7a3fb5'},
+  solar:{name:'Solar Flare', c1:'#4a2c00', c2:'#f2c94c', accent:'#ffd166', accent2:'#d68a00'},
+  deepsea:{name:'Deep Sea', c1:'#1a2980', c2:'#26d0ce', accent:'#26d0ce', accent2:'#1a2980'},
+  rosewater:{name:'Rosewater', c1:'#5c1a3a', c2:'#ee9ca7', accent:'#ffdde1', accent2:'#d97a9a'},
+  cosmos:{name:'Cosmos', c1:'#5f2c82', c2:'#49a09d', accent:'#7ce8dd', accent2:'#9a6ff2'}
+};
+var SOURCES=[
+  {url:'themes.repo/', name:'Themes Repository', type:'themes', pkgs:Object.keys(THEMES).filter(function(k){return k!=='monochrome';}).map(function(k){ return {id:'theme.'+k, name:THEMES[k].name, author:'Swiftia Kit', version:'1.1', section:'Themes', kind:'theme', theme:k, desc:'Gradient interface theme for Swiftia.'}; })},
+  {url:'procurus.net/', name:'Procurus', type:'tw', pkgs:[
+    {id:'tweak.gravitation', name:'Gravitation', author:'Procurus', version:'2.4.1', section:'Tweaks', kind:'tweak', desc:'Let every element fall under the influence of your device gravity. Shake twice up & down to engage or release.'},
+    {id:'tweak.editor', name:'Editor', author:'Procurus', version:'1.0.3', section:'Tweaks', kind:'tweak', desc:'Rearrange everything on the main page. Hold the top-right corner to activate, hold again to release.'}
+  ]}
+];
+var CUR={'themes.repo/':0,'procurus.net/':1};
+function themeList(){ return Object.keys(THEMES).map(function(k){ return THEMES[k].name; }).join(', '); }
+
+/* ================= Helpers ================= */
+function $(id){ return document.getElementById(id); }
+function dims(){ return {w:innerWidth,h:innerHeight}; }
+var toastTO=null;
+function toast(msg,ms){ $('toasttxt').textContent=msg; $('toast').classList.add('show'); clearTimeout(toastTO); toastTO=setTimeout(function(){ $('toast').classList.remove('show'); }, ms||2400); }
+function gradient(th){ return 'linear-gradient(170deg,'+th.c1+' 0%,'+th.c2+' 100%)'; }
+var bgFlip=false;
+function setBg(grad){
+  var a=$('bgA'), b=$('bgB');
+  if(bgFlip){ a.style.background=grad; a.classList.add('on'); b.classList.remove('on'); }
+  else{ b.style.background=grad; b.classList.add('on'); a.classList.remove('on'); }
+  bgFlip=!bgFlip;
+}
+function setThemeVars(){
+  var th=THEMES[S.active]||THEMES.monochrome;
+  var r=document.documentElement.style;
+  r.setProperty('--accent', th.accent);
+  r.setProperty('--accent2', th.accent2);
+  var meta=document.querySelector('meta[name=theme-color]'); if(meta) meta.content='#000';
+  setBg(gradient(th));
+}
+function isStandalone(){ return window.navigator.standalone===true || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches); }
+
+/* ================= Boot ================= */
+(function init(){
+  if(S.queueReady && S.queue.length) applyQueue();
+  setThemeVars();
+  if(S.installed){ show('app'); renderApp(); }
+  else show('landing');
+})();
+
+function show(v){
+  $('v-landing').classList.toggle('show', v==='landing');
+  $('v-app').classList.toggle('show', v==='app');
+}
+
+/* ================= Install flow ================= */
+function startInstall(){
+  var sh=$('installSheet'), body=$('installBody');
+  body.innerHTML=
+    '<div class="profcard">'+
+      '<div style="font-weight:800;font-size:16px;margin-bottom:10px">Swiftia Configuration</div>'+
+      '<div class="profrow"><div class="k">Signed by</div><div class="v">Swiftia Team</div></div>'+
+      '<div class="profrow"><div class="k">Type</div><div class="v">Website Profile</div></div>'+
+      '<div class="profrow"><div class="k">Devices</div><div class="v">A12 or later</div></div>'+
+      '<div class="profrow"><div class="k">OS Range</div><div class="v">26.6 – 27.0.1</div></div>'+
+      '<div class="progress"><i id="profbar"></i></div>'+
+      '<div class="verified" id="profdone">Verified · Configuration installed</div>'+
+    '</div>'+
+    '<button class="bigbtn" id="profbtn">Install Profile</button>';
+  sh.classList.add('open');
+  $('profbtn').onclick=function(){
+    var btn=$('profbtn'), bar=$('profbar');
+    btn.disabled=true; btn.style.opacity=.6; btn.textContent='Verifying…';
+    var p=0;
+    var iv=setInterval(function(){
+      p+=Math.random()*18+7; if(p>100)p=100;
+      bar.style.width=p+'%';
+      if(p>=100){
+        clearInterval(iv);
+        btn.textContent='Installed';
+        $('profdone').classList.add('show');
+        setTimeout(showHomeStep, 900);
+      }
+    },260);
+  };
+}
+function showHomeStep(){
+  var body=$('installBody');
+  body.innerHTML=
+    '<div class="card" style="margin-top:10px">'+
+      '<h2>Add Swiftia to Home Screen</h2>'+
+      '<p style="margin-bottom:12px">Create the shortcut so you can open Swiftia full screen from your Home Screen.</p>'+
+      '<div class="steps">'+
+        '<div class="step"><div class="n">1</div><div>Open this page in <b>Safari</b>.</div></div>'+
+        '<div class="step"><div class="n">2</div><div>Tap the <b>Share</b> button&nbsp;<svg width="15" height="15" viewBox="0 0 24 24" fill="#fff" style="vertical-align:-2px"><path d="M12 2l4 4h-3v8h-2V6H8l4-4zm-7 9h4v2H7v8h10v-8h-2v-2h4a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V13a2 2 0 0 1 2-2z"/></svg> in the toolbar.</div></div>'+
+        '<div class="step"><div class="n">3</div><div>Choose <b>Add to Home Screen</b> and name it <b>Swiftia</b>.</div></div>'+
+        '<div class="step"><div class="n">4</div><div>Open <b>Swiftia</b> from your Home Screen.</div></div>'+
+      '</div>'+
+    '</div>'+
+    '<button class="bigbtn" id="homebtn">I added it — Continue</button>';
+  $('homebtn').onclick=function(){
+    S.installed=true; save();
+    closeInstallCancel();
+    show('app'); renderApp();
+    if(!isStandalone()) toast('Tip: reopen from the Home Screen icon for the best experience',3400);
+    else toast('Welcome back to Swiftia');
+  };
+}
+function closeInstallCancel(){ $('installSheet').classList.remove('open'); }
+
+/* ================= App view render ================= */
+function renderApp(){
+  setThemeVars();
+  document.body.dataset.jb = S.jailbroken ? 'true':'false';
+  renderBigBtn();
+  var hasG=S.tweaks.indexOf('tweak.gravitation')>=0;
+  document.body.dataset.edavail = (S.jailbroken && hasG===true && S.tweaks.indexOf('tweak.editor')>=0) ? 'true':'false';
+  if(!hasG){ S.motion=false; }
+  $('motionChip').classList.toggle('show', hasG && !S.motion && S.jailbroken);
+  renderThemeGrid();
+  updateTopBadges();
+  applyEdPositions();
+}
+function renderBigBtn(){
+  var b=$('bigbtn');
+  if(S.jb_running){
+    b.disabled=true; b.className='bigbtn'; b.innerHTML=
+      '<svg class="spin" width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="rgba(255,255,255,.3)" stroke-width="3"/><path d="M21 12a9 9 0 0 0-9-9" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>'+
+      '<span>Jailbreaking…</span>';
+  } else if(S.jailbroken){
+    b.disabled=false; b.className='bigbtn jb-done'; b.innerHTML=
+      '<svg width="21" height="21" viewBox="0 0 24 24" fill="#fff"><path d="M8 1a5 5 0 0 1 5 5v3h6a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2h6V6a3 3 0 0 0-6 0 1 1 0 0 1-2 0 5 5 0 0 1 5-5zm11 10H5v9h14v-9z"/></svg>'+
+      '<span>Jailbroken</span>';
+  } else {
+    b.disabled=false; b.className='bigbtn'; b.innerHTML=
+      '<svg width="21" height="21" viewBox="0 0 24 24" fill="#fff"><path d="M12 1a5 5 0 0 1 5 5v3h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2h8V6a3 3 0 0 0-6 0 1 1 0 0 1-2 0 5 5 0 0 1 5-5z"/></svg>'+
+      '<span>Jailbreak</span>';
+  }
+}
+function updateTopBadges(){
+  var b=$('jbbadge'), d=$('jbdesc');
+  if(S.jailbroken){ b.textContent='Jailbroken'; b.style.color='#5ee3a0'; d.textContent='SwiftSword · semi-untethered'; }
+  else { b.textContent=S.jb_running?'Running':'Stock'; b.style.color=S.jb_running?'#ffd60a':'rgba(245,245,247,.45)'; d.textContent=S.jb_running?'SwiftSword in progress':'iOS ready for jailbreak'; }
+}
+function renderThemeGrid(){
+  var g=$('thgrid'); g.innerHTML='';
+  S.themes.forEach(function(k){
+    var th=THEMES[k]; if(!th) return;
+    var d=document.createElement('button');
+    d.className='thcard'+(S.active===k?' active check':''); d.dataset.ed='';
+    d.style.background=gradient(th);
+    d.innerHTML='<span>'+th.name+'</span>';
+    d.onclick=function(){ S.active=k; save(); renderApp(); toast(th.name+' applied'); };
+    g.appendChild(d); d.dataset.ed='t_'+k;
+  });
+}
+
+/* ================= Logs ================= */
+function fmtT(){ var d=new Date(); var m=('0'+d.getMinutes()).slice(-2), s=('0'+d.getSeconds()).slice(-2); return m+':'+s; }
+function log(msg,ok){
+  var box=$('logs');
+  if(box.querySelector('.logs-empty')) box.innerHTML='';
+  var l=document.createElement('div');
+  l.className='log-line'+(ok?' ok':'');
+  l.innerHTML='<span class="t">['+fmtT()+']</span><span class="m">'+msg+'</span>';
+  box.appendChild(l); box.scrollTop=box.scrollHeight;
+}
+function clearLogs(){ $('logs').innerHTML='<div class="logs-empty">No activity.</div>'; }
+
+/* ================= Jailbreak sequence ================= */
+var LOGSEQ=[
+  ['SwiftSword: initializing exploit environment',0],
+  ['SwiftSword: checking iOS 26.6 – 27.0.1 offsets',0],
+  ['SwiftSword: physmap race — stage 1 … ok',0],
+  ['SwiftSword: gaining kernel read/write',1],
+  ['SwiftSword: patching platform trust cache',0],
+  ['SwiftSword: trust cache accepted',1],
+  ['SwiftSword: remounting rootfs read-write',1],
+  ['SwiftSword: injecting launchd bootstrap /jb',0],
+  ['SwiftSword: installing Sileo 2.4.1',0],
+  ['SwiftSword: done in 6.8s — respringing',1]
+];
+function onBigBtn(){
+  if(S.jb_running) return;
+  if(S.jailbroken){ toast('Already jailbroken'); return; }
+  S.jb_running=true; updateTopBadges(); renderBigBtn();
+  log('SwiftSword: preparing device',1);
+  var t=500;
+  LOGSEQ.forEach(function(item){
+    setTimeout(function(){ log(item[0],item[1]); }, t);
+    t+=560+Math.random()*360;
+  });
+  setTimeout(function(){ runRespring(); }, t+700);
+}
+function runRespring(){
+  var r=$('respring'), m=$('statusmask'), f=$('rbarfill'), msg=$('rmsg');
+  msg.textContent='Respringing SpringBoard…';
+  r.classList.add('on'); m.classList.add('on');
+  var p=0;
+  var iv=setInterval(function(){
+    p+=Math.random()*7+3; if(p>100)p=100;
+    f.style.width=p+'%';
+    if(p>=100){
+      clearInterval(iv);
+      setTimeout(function(){
+        msg.textContent='Locking device…';
+        setTimeout(function(){
+          r.classList.remove('on'); m.classList.remove('on'); f.style.width='0';
+          S.jb_running=false; S.jailbroken=true; save();
+          renderApp();
+          toast('Jailbreak complete · Sileo installed',2800);
+        },900);
+      },350);
+    }
+  },130);
+}
+
+/* ================= Remove jailbreak ================= */
+function removeJB(){
+  var sh=$('installSheet'), body=$('installBody');
+  body.innerHTML=
+    '<div class="card" style="margin-top:10px;text-align:center">'+
+      '<h2 style="justify-content:center;color:#ff453a">Remove Jailbreak</h2>'+
+      '<p>This removes SwiftSword, Sileo, all installed themes and tweaks. Your device returns to its stock state.</p>'+
+    '</div>'+
+    '<button class="bigbtn" style="background:linear-gradient(120deg,#ff453a,#ff2d55)" onclick="doRemove()">Remove</button>'+
+    '<button class="remove-btn" onclick="closeInstallCancel()">Cancel</button>';
+  sh.classList.add('open');
+}
+function doRemove(){
+  $('installSheet').classList.remove('open');
+  gActive=false; stopGravity();
+  edActive=false; document.body.classList.remove('ed-on','g-on');
+  S.jailbroken=false; S.jb_running=false;
+  S.themes=['monochrome']; S.active='monochrome';
+  S.tweaks=[]; S.queue=[]; S.queueReady=false; S.motion=false; S.edpos={};
+  save(); clearLogs(); renderApp();
+  toast('Jailbreak removed');
+}
+
+/* ================= Sileo ================= */
+var sileoTab='sources', sileoSrc=null, searchQ='';
+function openSileo(){ if(!S.jailbroken) return; sileoTab='sources'; sileoSrc=null; searchQ=''; $('sileoSheet').classList.add('open'); renderSileo(); }
+function closeSileo(){ $('sileoSheet').classList.remove('open'); }
+function pkgInstalled(p){ return p.kind==='theme' ? S.themes.indexOf(p.theme)>=0 : S.tweaks.indexOf(p.id)>=0; }
+function inQueue(p){ return S.queue.indexOf(p.id)>=0; }
+function renderSileo(){
+  var b=$('sileoBody'), h='';
+  h+='<div class="seg">'+
+     '<button class="'+(sileoTab==='sources'?'on':'')+'" onclick="sileoTab=\'sources\';sileoSrc=null;renderSileo()">Sources</button>'+
+     '<button class="'+(sileoTab==='queue'?'on':'')+'" onclick="sileoTab=\'queue\';sileoSrc=null;renderSileo()">Queue'+(S.queue.length?' ('+S.queue.length+')':'')+'</button>'+
+     '</div>';
+  h+='<div class="searchwrap"><svg width="17" height="17" viewBox="0 0 24 24" fill="rgba(245,245,247,.6)"><path d="M10 2a8 8 0 1 0 4.9 14.3l5.4 5.4a1 1 0 0 0 1.4-1.4l-5.4-5.4A8 8 0 0 0 10 2zm0 2a6 6 0 1 1 0 12 6 6 0 0 1 0-12z"/></svg><input class="search" placeholder="Search themes & tweaks" value="'+searchQ.replace(/"/g,'&quot;')+'" oninput="searchQ=this.value;renderSileo()"></div>';
+
+  if(sileoTab==='sources' && sileoSrc===null){
+    if(searchQ){ h+=searchResults(); }
+    else{
+      if(S.sources.length===0) h+='<div class="empty">No sources yet.<br>Add a repository to browse packages.</div>';
+      S.sources.forEach(function(si){
+        var src=SOURCES[CUR[si]]; if(!src) return;
+        var icon=src.type==='themes'
+          ? '<div class="srcicon" style="background:linear-gradient(140deg,#654ea3,#eaafc8)"><svg width="22" height="22" viewBox="0 0 72 72"><polygon points="36,14 56,58 16,58" fill="rgba(255,255,255,.95)"/></svg></div>'
+          : '<div class="srcicon" style="background:linear-gradient(140deg,#0a84ff,#5e5ce6)"><svg width="22" height="22" viewBox="0 0 24 24" fill="#fff"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg></div>';
+        h+='<div class="srccard" onclick="sileoSrc=\''+si+'\';searchQ=\'\';renderSileo()">'+icon+
+           '<div><div class="n">'+src.name+'</div><div class="u">'+src.url+' · '+src.pkgs.length+' packages</div></div></div>';
+      });
+      h+='<button class="addsrc" onclick="addSourceFlow()">+ Add Source</button>';
+    }
+  }
+  else if(sileoTab==='sources'){ h+=srcPage(); }
+
+  if(sileoTab==='queue'){
+    h+='<div class="qlist">';
+    if(S.queue.length===0) h+='<div class="empty">Nothing queued.<br>Queue packages from any source.</div>';
+    S.queue.forEach(function(id){
+      var p=findPkg(id); if(!p) return;
+      h+='<div class="pkg"><div class="ic" style="background:'+picon(p)+'">'+pchar(p)+'</div>'+
+         '<div class="info"><div class="n">'+p.name+'</div><div class="s">'+p.section+' · '+p.version+'</div></div>'+
+         '<button class="xbtn" onclick="unqueue(\''+id+'\')">✕</button></div>';
+    });
+    h+='</div>';
+    var qico=S.queueReady?'Queued':'Install';
+    h+='<div class="qbar">'+
+       '<button class="bigbtn" '+(S.queue.length?(S.queueReady?'disabled style=opacity:.55':''):'disabled style=opacity:.55')+' onclick="confirmQueue()">'+(S.queueReady?'Packages queued':'Install '+S.queue.length+' package'+(S.queue.length===1?'':'s'))+'</button>'+
+       '<div class="note">'+(S.queueReady?'Packages will be applied when you reopen Swiftia.':' Changes apply after you reopen Swiftia.')+'</div>'+
+       '</div>';
+  }
+  b.innerHTML=h;
+}
+function findPkg(id){ for(var i=0;i<SOURCES.length;i++){ var arr=SOURCES[i].pkgs; for(var j=0;j<arr.length;j++) if(arr[j].id===id) return arr[j]; } return null; }
+function picon(p){ return p.kind==='theme' ? gradient(THEMES[p.theme]) : 'linear-gradient(140deg,#ff2d55,#5e5ce6)'; }
+function pchar(p){ return p.kind==='theme' ? '<svg width="18" height="18" viewBox="0 0 72 72"><polygon points="36,14 56,58 16,58" fill="rgba(255,255,255,.95)"/></svg>' : '⚡'; }
+
+function srcPage(){
+  var src=SOURCES[CUR[sileoSrc]]; if(!src){ sileoSrc=null; return ''; }
+  var h='<div class="backrow"><button onclick="sileoSrc=null;renderSileo()">‹ '+src.name+'</button></div>';
+  h+='<div class="srccard" style="margin-bottom:16px">'+(src.type==='themes'
+      ?'<div class="srcicon" style="background:linear-gradient(140deg,#654ea3,#eaafc8)"><svg width="22" height="22" viewBox="0 0 72 72"><polygon points="36,14 56,58 16,58" fill="rgba(255,255,255,.95)"/></svg></div>'
+      :'<div class="srcicon" style="background:linear-gradient(140deg,#0a84ff,#5e5ce6)"><svg width="22" height="22" viewBox="0 0 24 24" fill="#fff"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg></div>')+
+      '<div><div class="n">'+src.name+'</div><div class="u">'+src.url+' · '+src.pkgs.length+' packages</div></div></div>';
+  src.pkgs.forEach(function(p){
+    if(searchQ && p.name.toLowerCase().indexOf(searchQ.toLowerCase())<0) return;
+    var st='';
+    if(pkgInstalled(p)) st='<span class="pkgbtn applied">INSTALLED</span>';
+    else if(inQueue(p)) st='<button class="pkgbtn queued">QUEUED</button>';
+    else st='<button class="pkgbtn" onclick="queuePkg(\''+p.id+'\')">GET</button>';
+    if(p.kind==='theme' && pkgInstalled(p)) st='<button class="pkgbtn small" '+(S.active===p.theme?'disabled style="opacity:.5;color:#5ee3a0;background:none"':'')+' onclick="activateTheme(\''+p.theme+'\')">'+(S.active===p.theme?'ACTIVE':'APPLY')+'</button>';
+    h+='<div class="pkg"><div class="ic" style="background:'+picon(p)+'">'+pchar(p)+'</div>'+
+       '<div class="info"><div class="n">'+p.name+'</div><div class="s">'+p.author+' · '+p.version+'</div><div class="desc">'+p.desc+'</div></div>'+st+'</div>';
+  });
+  if(src.pkgs.every(function(p){return searchQ && p.name.toLowerCase().indexOf(searchQ.toLowerCase())>=0 ? false : true;})) h+='<div class="empty">No packages.</div>';
+  return h;
+}
+function searchResults(){
+  var h='', any=false;
+  S.sources.forEach(function(si){
+    var src=SOURCES[CUR[si]]; if(!src) return;
+    src.pkgs.forEach(function(p){
+      if(searchQ && p.name.toLowerCase().indexOf(searchQ.toLowerCase())>=0){
+        any=true;
+        var st=pkgInstalled(p)?'<span class="pkgbtn applied">INSTALLED</span>':(inQueue(p)?'<button class="pkgbtn queued">QUEUED</button>':'<button class="pkgbtn" onclick="queuePkg(\''+p.id+'\')">GET</button>');
+        h+='<div class="pkg"><div class="ic" style="background:'+picon(p)+'">'+pchar(p)+'</div><div class="info"><div class="n">'+p.name+'</div><div class="s">'+src.url+' · '+p.section+'</div></div>'+st+'</div>';
+      }
+    });
+  });
+  if(!any) h+='<div class="empty">No results for “'+searchQ.replace(/[<>&]/g,'')+'”.</div>';
+  return h;
+}
+function addSourceFlow(){
+  var sh=$('installSheet'), body=$('installBody');
+  body.innerHTML=
+    '<div class="card" style="margin-top:10px">'+
+      '<h2>Add Source</h2>'+
+      '<p style="margin-bottom:12px">Enter the URL of a Swiftia-compatible repository.</p>'+
+      '<input class="search" id="srcinput" style="height:46px;font-size:15px" placeholder="repo.example.com/" autocapitalize="off" autocorrect="off">'+
+    '</div>'+
+    '<button class="bigbtn" onclick="addSourceGo()">Add Source</button>';
+  sh.classList.add('open');
+  setTimeout(function(){ var i=$('srcinput'); if(i) i.focus(); },350);
+}
+function addSourceGo(){
+  var v=($('srcinput').value||'').trim().toLowerCase();
+  v=v.replace(/^https?:\/\//,'').replace(/\/+$/,'/')+'/';
+  v=v.replace('https://','');
+  if(S.sources.indexOf(v)>=0){ toast('Source already added'); return; }
+  if(CUR[v]!==undefined){
+    closeInstallCancel(); S.sources.push(v); sortSources(); save(); renderSileo();
+    toast('Source added · '+v);
+  } else { toast('Source could not be reached'); }
+}
+function sortSources(){ S.sources.sort(); }
+function queuePkg(id){
+  if(S.queue.indexOf(id)<0){ S.queue.push(id); save(); toast('Added to queue · '+id.split('.')[1]); renderSileo(); }
+}
+function unqueue(id){ S.queue=S.queue.filter(function(x){return x!==id;}); if(S.queueReady&&!S.queue.length){S.queueReady=false;} save(); renderSileo(); }
+function confirmQueue(){
+  if(!S.queue.length || S.queueReady) return;
+  S.queueReady=true; save(); renderSileo();
+  toast('Packages will be applied after reopen',3000);
+}
+function applyQueue(){
+  var n=0, git=false;
+  S.queue.forEach(function(id){
+    var p=findPkg(id); if(!p||pkgInstalled(p)) return;
+    if(p.kind==='theme'){ if(S.themes.indexOf(p.theme)<0) S.themes.push(p.theme); S.active=p.theme; }
+    else{ if(S.tweaks.indexOf(p.id)<0) S.tweaks.push(p.id); if(id==='tweak.editor') git=true; }
+    n++;
+  });
+  S.queue=[]; S.queueReady=false; save();
+  if(n>0){ setThemeVars(); toast(n+' package'+(n===1?'':'s')+' applied',3000); if(git) toast('Editor installed — hold top-right corner to activate',3600); }
+}
+
+/* ================= Themes ================= */
+function activateTheme(k){ S.active=k; save(); renderApp(); renderSileo(); toast((THEMES[k]?THEMES[k].name:'Theme')+' applied'); }
+
+/* ================= Gravitation ================= */
+var gActive=false, gBlocks={}, gX=0, gY=0, shakeHits=[], gRaf=null, gGamma=0, gBeta=0;
+function askMotion(){
+  if(typeof DeviceMotionEvent!=='undefined' && DeviceMotionEvent.requestPermission){
+    DeviceMotionEvent.requestPermission().then(function(res){
+      if(res==='granted'){ S.motion=true; save(); $('motionChip').classList.remove('show'); toast('Motion access granted'); initMotion(); }
+      else toast('Motion access denied');
+    }).catch(function(){ toast('Motion access unavailable'); });
+  } else if(typeof DeviceMotionEvent!=='undefined'){
+    S.motion=true; save(); $('motionChip').classList.remove('show'); toast('Motion access granted'); initMotion();
+  } else { toast('Motion sensors unavailable'); }
+}
+function initMotion(){
+  if(gRaf!==null) return;
+  window.addEventListener('devicemotion', onMotion);
+  window.addEventListener('deviceorientation', function(e){ gGamma=e.gamma||0; gBeta=e.beta||0; });
+}
+function onMotion(e){
+  var a=e.accelerationIncludingGravity||e.acceleration; if(!a) return;
+  var y=Math.max(-30,Math.min(30,a.y||0));
+  var now=Date.now();
+  if(Math.abs(y)>13){
+    var last=shakeHits[shakeHits.length-1];
+    if(!last || now-last.t>160) shakeHits.push({t:now,s:y>0?1:-1});
+    while(shakeHits.length>4) shakeHits.shift();
+    for(var i=0;i<shakeHits.length-1;i++){
+      if(shakeHits[i].s!==shakeHits[i+1].s && (shakeHits[i+1].t-shakeHits[i].t)<420){
+        var t2=shakeHits[i+2];
+        var ok=!t2 || (t2.s!==shakeHits[i+1].s && (t2.t-shakeHits[i+1].t)<420);
+        if(ok){ shakeHits=[]; toggleGravity(); }
+        break;
+      }
+    }
+  }
+}
+function collectBlocks(){
+  gBlocks={};
+  var els=document.querySelectorAll('#v-app [data-ed]');
+  var i=0;
+  els.forEach(function(el){
+    if(!el.dataset.ed) return;
+    var r=el.getBoundingClientRect();
+    gBlocks[el.dataset.ed]={el:el,x:0,y:0,base:(i++)*26, r:el, rect:null};
+  });
+}
+function toggleGravity(){
+  if(!S.tweaks.indexOf||S.tweaks.indexOf('tweak.gravitation')<0||!S.jailbroken) return;
+  gActive=!gActive;
+  collectBlocks();
+  if(gActive){
+    document.body.classList.add('g-on');
+    toast('Gravitation engaged — shake twice to release');
+    gRaf=requestAnimationFrame(gravityLoop);
+  } else {
+    document.body.classList.remove('g-on');
+    toast('Gravitation released');
+    gX=0; gY=0;
+    Object.keys(gBlocks).forEach(function(k){ gBlocks[k].x=0; gBlocks[k].y=0; applyT(gBlocks[k]); });
+    setTimeout(function(){ Object.keys(gBlocks).forEach(function(k){ gBlocks[k].el.style.transform=''; }); },500);
+  }
+}
+function gravityLoop(){
+  if(!gActive) return;
+  var tx=Math.max(-70,Math.min(70,-gGamma*1.15));
+  var ty=Math.max(-30,Math.min(120,gBeta>55?120:gBeta*1.2));
+  gX+=(tx-gX)*.06; gY+=(ty-gY)*.06;
+  var idx=0;
+  Object.keys(gBlocks).forEach(function(k){
+    var b=gBlocks[k];
+    var targetX=gX*((idx%2)?-1:1)*.6;
+    var targetY=gY*(0.5+ (idx%3)*0.25);
+    b.x+=(targetX-b.x)*.09; b.y+=(targetY-b.y)*.09;
+    var rr=(idx%2?-2.4:2.4)*(0.6+Math.abs(gX)/70);
+    b.el.style.transform='translate('+b.x.toFixed(1)+'px,'+b.y.toFixed(1)+'px) rotate('+rr.toFixed(2)+'deg)';
+    idx++;
+  });
+  gRaf=requestAnimationFrame(gravityLoop);
+}
+function stopGravity(){ cancelAnimationFrame(gRaf); gRaf=null; }
+
+/* ================= Editor ================= */
+var edActive=false, edTimer=null;
+function applyEdPositions(){
+  document.querySelectorAll('#v-app [data-ed]').forEach(function(el){
+    var id=el.dataset.ed;
+    if(id && S.edpos[id]) el.style.transform='translate('+S.edpos[id].x+'px,'+S.edpos[id].y+'px)';
+  });
+}
+$('edcorner').addEventListener('pointerdown', function(e){
+  e.preventDefault();
+  clearTimeout(edTimer);
+  edTimer=setTimeout(toggleEditor, 850);
+});
+$('edcorner').addEventListener('pointerup', function(){ clearTimeout(edTimer); });
+$('edcorner').addEventListener('pointerleave', function(){ clearTimeout(edTimer); });
+function toggleEditor(){
+  if(S.tweaks.indexOf('tweak.editor')<0||!S.jailbroken) return;
+  edActive=!edActive;
+  document.body.classList.toggle('ed-on',edActive);
+  toast(edActive?'Editor activated — hold again to release':'Editor released');
+  if(!edActive) save();
+}
+(function dragInit(){
+  var drag=null;
+  document.addEventListener('pointerdown', function(e){
+    if(!edActive) return;
+    var el=e.target.closest('#v-app [data-ed]'); if(!el||!el.dataset.ed) return;
+    var id=el.dataset.ed, r=el.getBoundingClientRect();
+    drag={el:el,id:id,sx:e.clientX,sy:e.clientY,bx:(S.edpos[id]||{x:0,y:0}).x,by:(S.edpos[id]||{x:0,y:0}).y};
+    el.style.transition='none';
+  });
+  document.addEventListener('pointermove', function(e){
+    if(!drag) return;
+    S.edpos[drag.id]={x:drag.bx+(e.clientX-drag.sx), y:drag.by+(e.clientY-drag.sy)};
+    drag.el.style.transform='translate('+S.edpos[drag.id].x+'px,'+S.edpos[drag.id].y+'px)';
+  });
+  document.addEventListener('pointerup', function(){ if(drag&&edActive) save(); drag=null; });
+})();
+
+/* desktop hint for gravitation testing */
+document.addEventListener('keydown', function(e){ if(e.key==='g'&&e.shiftKey&&S.jailbroken&&S.tweaks.indexOf('tweak.gravitation')>=0){ gGamma=(gGamma>0?-30:30); } });
+</script>
+</body>
+</html>
