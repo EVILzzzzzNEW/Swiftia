@@ -458,11 +458,12 @@ function setThemeVars(){
 function isStandalone(){ return window.navigator.standalone===true || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches); }
 
 /* ================= Boot ================= */
-(function isClip(){ try{ if(new URLSearchParams(location.search).get('clip')==='1'){ S.installed=true; save(); } }catch(e){} })();
 (function init(){
   if(S.queueReady && S.queue.length) applyQueue();
   setThemeVars();
-  if(S.installed){ show('app'); renderApp(); }
+  var clip=false;
+  try{ clip=new URLSearchParams(location.search).get('clip')==='1'; }catch(e){}
+  if(clip){ show('app'); renderApp(); }
   else show('landing');
 })();
 

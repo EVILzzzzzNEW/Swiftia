@@ -2,7 +2,7 @@
 
 Swiftia is a **web-based simulation** of a iOS-style jailbreak experience called "SwiftSword". It is pure entertainment — it does **not** modify, exploit, or jailbreak any real device, and it installs no real configuration profiles. Everything lives inside the browser page:
 
-- "Install Swiftia" downloads a **real iOS configuration profile** (`swiftia.mobileconfig`, Web Clip payload). You activate it yourself in **Settings → Profile Downloaded → Install** — nothing is installed silently. When activated, iOS adds the **Swiftia** shortcut to your Home Screen; tapping it opens the site full-screen **directly on the main page with the jailbreak button**.
+- "Install Swiftia" downloads a **real iOS configuration profile** (`swiftia.mobileconfig`, Web Clip payload). You activate it yourself in **Settings → Profile Downloaded → Install** — nothing is installed silently. When activated, iOS adds the **Swiftia** shortcut to your Home Screen; Opening it straight-away opens the full-screen jailbreak main page. The website URL itself (`https://swiftia.onrender.com`) always opens the landing page; only the profile shortcut (`?clip=1`) opens the main page.
 - "Jailbreak" streams console-style log lines with a fading animation, then shows a respring overlay, then switches the button to "Jailbroken" with an unlocked lock icon.
 - **Sileo** sheet: add the bundled sources, browse/search packages, queue multiple items — queued packages are applied the next time you reopen the page.
   - `themes.repo/` — 10 gradient themes (installable, apply from the main page, default is Monochrome black/white)
